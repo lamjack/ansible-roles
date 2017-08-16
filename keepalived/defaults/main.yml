@@ -1,0 +1,12 @@
+---
+keepalived_version: 1.3.5
+keepalived_download_url: "http://www.keepalived.org/software/keepalived-{{ keepalived_version }}.tar.gz"
+keepalived_install_dir: /usr/local/keepalived
+keepalived_chroot_dir: /var/run/keepalived
+keepalived_service_manager: systemd
+
+keepalived_source_configure_command: >
+  ./configure
+  --prefix={{ keepalived_install_dir }}
+
+keepalived_options: "-f {{ keepalived_install_dir }}/etc/keepalived.conf -D -p {{ keepalived_chroot_dir }}/keepalived.pid -d -S 0"

@@ -1,0 +1,16 @@
+---
+- include: _download.yml
+  tags:
+    - download
+
+- include: _dependencies.yml
+  tags:
+    - install
+
+- include: _install.yml
+  tags:
+    - install
+
+- include: _pools.yml
+  tags:
+    - config

@@ -1,0 +1,69 @@
+---
+## 创建用户和用户组
+- name: check if haproxy user exists
+  command: id {{ haproxy_user }}
+  ignore_errors: yes
+  changed_when: false
+  register: _haproxy_user_exists
+
+- name: add haproxy group
+  group:
+    name: "{{ haproxy_group }}"
+    state: present
+  when: _haproxy_user_exists|failed
+
+- name: add haproxy user
+  user:
+    name: "{{ haproxy_user }}"
+    group: "{{ haproxy_group }}"
+    comment: "haproxy"
+    shell: /bin/false
+    system: yes
+  when: _haproxy_user_exists|failed
+
+## 创建所需目录
+- name: create haproxy directories
+  file:
+    state: directory
+    path: "{{ item }}"
+  with_items:
+    - "{{ haproxy_install_dir }}"
+    - "{{ haproxy_config_dir }}"
+
+- name: create {{ haproxy_chroot_dir }}
+  file:
+    state: directory
+    path: "{{ haproxy_chroot_dir }}"
+    owner: "{{ haproxy_user }}"
+
+## 编译安装
+- name: compile haproxy
+  command: "make {{ haproxy_make_config }}"
+  args:
+    chdir: /usr/local/src/haproxy-{{ haproxy_version }}
+    creates: haproxy
+
+- name: install haproxy
+  command: make install PREFIX={{ haproxy_install_dir }}
+  args:
+    chdir: /usr/local/src/haproxy-{{ haproxy_version }}
+    creates: "{{ haproxy_install_dir }}/sbin/haproxy"
+
+## Link
+- name: list haproxy binaries to add to alternatives
+  command: ls -1 {{ haproxy_install_dir }}/sbin
+  register: haproxy_binaries
+  changed_when: false
+
+- name: add haproxy binaries to alternatives
+  alternatives:
+    name: "{{ item }}"
+    path: "{{ haproxy_install_dir }}/sbin/{{ item }}"
+    link: "/usr/bin/{{ item }}"
+  with_items: "{{ haproxy_binaries.stdout_lines }}"
+
+- name: copy haproxy-systemd-wrapper
+  command: "cp -f haproxy-systemd-wrapper {{ haproxy_install_dir }}/sbin/haproxy-systemd-wrapper"
+  args:
+    chdir: "/usr/local/src/haproxy-{{ haproxy_version }}"
+    creates: "{{ haproxy_install_dir }}/sbin/haproxy-systemd-wrapper"

@@ -1,0 +1,50 @@
+---
+- name: generate keepalived init script
+  when: keepalived_service_manager != "systemd"
+  template:
+    src: keepalived.init.j2
+    dest: /etc/init.d/keepalived
+    mode: 0755
+
+- name: generate keepalived init config file
+  when: keepalived_service_manager != "systemd"
+  template:
+    src: etc/sysconfig/keepalived.j2
+    dest: /etc/sysconfig/keepalived
+    mode: 0644
+
+- name: generate keepalived systemd service
+  when: keepalived_service_manager == "systemd"
+  template:
+    src: keepalived.service.j2
+    dest: /etc/systemd/system/keepalived.service
+    mode: 0644
+  register: keepalived_unit_file
+
+- name: create systemd tmpfiles configuration
+  when:
+    - ansible_service_mgr|default() == 'systemd'
+    - keepalived_chroot_dir.startswith('/var/run') or keepalived_chroot_dir.startswith('/run')
+  template:
+    src: etc/tmpfiles.d/keepalived.conf.j2
+    dest: /etc/tmpfiles.d/keepalived.conf
+    mode: 0644
+
+- name: reload systemd daemon
+  command: systemctl daemon-reload
+  when:
+    - keepalived_service_manager == "systemd"
+    - keepalived_unit_file|changed
+
+- name: set keepalived to start at boot
+  service:
+    name: keepalived
+    enabled: yes
+
+- name: flush handlers to apply config changes
+  meta: flush_handlers
+
+- name: ensure keepalived is running
+  service:
+    name: keepalived
+    state: started

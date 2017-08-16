@@ -1,0 +1,6 @@
+---
+- name: start ntpd
+  when: ansible_distribution == "CentOS"
+  service:
+    name: ntpd
+    state: started

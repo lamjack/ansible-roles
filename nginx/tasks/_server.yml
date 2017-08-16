@@ -1,0 +1,49 @@
+---
+- name: create nginx config file
+  template:
+    src: nginx.conf.j2
+    dest: "{{ nginx_install_dir }}/conf/nginx.conf"
+    force: yes
+
+- name: create nginx init script
+  when: ansible_service_mgr|default() != "systemd"
+  template:
+    src: nginx.init.j2
+    dest: /etc/init.d/nginx
+    mode: 0755
+
+- name: create nginx systemd service
+  when: ansible_service_mgr|default() == "systemd"
+  template:
+    src: nginx.service.j2
+    dest: /etc/systemd/system/nginx.service
+    mode: 0644
+  register: nginx_unit_file
+
+- name: create systemd tmpfiles configuration
+  when:
+    - ansible_service_mgr|default() == 'systemd'
+    - (nginx_pidfile|dirname).startswith('/var/run') or (nginx_pidfile|dirname).startswith('/run')
+  template:
+    src: etc/tmpfiles.d/nginx.conf.j2
+    dest: /etc/tmpfiles.d/nginx.conf
+    mode: 0644
+
+- name: reload systemd daemon
+  command: systemctl daemon-reload
+  when:
+    - ansible_service_mgr|default() == "systemd"
+    - nginx_unit_file|changed
+
+- name: set nginx to start at boot
+  service:
+    name: nginx
+    enabled: yes
+
+- name: flush handlers to apply config changes
+  meta: flush_handlers
+
+- name: ensure nginx is running
+  service:
+    name: nginx
+    state: started

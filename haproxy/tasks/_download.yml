@@ -1,0 +1,13 @@
+---
+- name: download haproxy-{{ haproxy_version }}
+  get_url:
+    url: "{{ haproxy_download_url }}"
+    dest: /usr/local/src/haproxy-{{ haproxy_version }}.tar.gz
+    force: no
+
+- name: extract haproxy-{{ haproxy_version }} tarball
+  unarchive:
+    src: /usr/local/src/haproxy-{{ haproxy_version }}.tar.gz
+    dest: /usr/local/src
+    creates: /usr/local/src/haproxy-{{ haproxy_version }}/Makefile
+    copy: no

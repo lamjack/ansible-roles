@@ -1,0 +1,10 @@
+---
+- name: Install jemalloc
+  when: ansible_distribution == 'CentOS'
+  yum: >
+    name="{{ item }}"
+    state=present
+    enablerepo=epel
+  with_items:
+    - jemalloc
+    - jemalloc-devel

@@ -1,0 +1,15 @@
+[Unit]
+Description=The PHP FastCGI Process Manager
+After=network.target
+
+[Service]
+Type=forking
+PIDFile={{ php70_install_dir }}/var/run/php-fpm.pid
+ExecStart={{ php70_install_dir }}/sbin/php-fpm --fpm-config {{ php70_config_dir }}/php-fpm.conf
+ExecReload=/bin/kill -USR2 $MAINPID
+PrivateTmp=true
+WatchdogSec=30
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,39 @@
+---
+- name: install psmisc
+  when: ansible_distribution == "CentOS"
+  yum:
+    name: "psmisc"
+    state: present
+
+- name: create keepalived install directory
+  file:
+    path: "{{ keepalived_install_dir }}"
+    state: directory
+
+- name: create keepalived chroot directory
+  file:
+    path: "{{ keepalived_chroot_dir }}"
+    state: directory
+
+- name: compile and install keepalived
+  command: "{{ item }}"
+  with_items:
+    - "{{ keepalived_source_configure_command }}"
+    - make
+    - make install
+  args:
+    chdir: /usr/local/src/keepalived-{{ keepalived_version }}
+    creates: "{{ keepalived_install_dir }}/sbin/keepalived"
+
+## Link
+- name: list keepalived binaries to add to alternatives
+  command: ls -1 {{ keepalived_install_dir }}/sbin
+  register: keepalived_binaries
+  changed_when: false
+
+- name: add keepalived binaries to alternatives
+  alternatives:
+    name: "{{ item }}"
+    path: "{{ keepalived_install_dir }}/sbin/{{ item }}"
+    link: "/usr/bin/{{ item }}"
+  with_items: "{{ keepalived_binaries.stdout_lines }}"

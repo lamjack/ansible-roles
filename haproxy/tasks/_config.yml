@@ -1,0 +1,6 @@
+---
+- name: generate haproxy config
+  template:
+    src: etc/haproxy.cfg.j2
+    dest: "{{ haproxy_config_dir }}/haproxy.cfg"
+    force: no

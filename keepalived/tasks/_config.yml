@@ -1,0 +1,6 @@
+---
+- name: generate keepalived config
+  template:
+    src: etc/keepalived.conf.j2
+    dest: "{{ keepalived_install_dir }}/etc/keepalived.conf"
+    force: no

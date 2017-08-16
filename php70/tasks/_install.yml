@@ -1,0 +1,95 @@
+## 检查是否需要创建php-fpm用户以及组
+- name: check if php-fpm user exists
+  command: id {{ php_user }}
+  ignore_errors: yes
+  changed_when: false
+  register: _php_user_exists
+
+- name: add php-fpm group
+  group:
+    name: "{{ php_group }}"
+    state: present
+  when: _php_user_exists|failed
+
+- name: add php-fpm user
+  user:
+    name: "{{ php_user }}"
+    group: "{{ php_group }}"
+    createhome: no
+    comment: "php-fpm"
+    shell: /bin/false
+    system: yes
+  when: _php_user_exists|failed
+
+## 创建php70所需要的目录
+# 安装目录
+- name: create php70 install directory
+  file:
+    path: "{{ php70_install_dir }}"
+    state: directory
+
+# 配置文件目录
+- name: create {{ php70_config_dir }}
+  file:
+    path: "{{ php70_config_dir }}"
+    state: directory
+
+# 扩展配置目录
+- name: create {{ php70_extension_config_dir }}
+  file:
+    path: "{{ php70_extension_config_dir }}"
+    state: directory
+
+## 编译安装php70
+- name: compile and install php70
+  command: "{{ item }}"
+  with_items:
+    - ./buildconf --force
+    - "{{ php_source_configure_command }}"
+    - make ZEND_EXTRA_LIBS='-liconv' -j {{ ansible_processor_cores }}
+    - make install
+  args:
+    chdir: /usr/local/src/php-{{ php_version }}
+    creates: "{{ php70_install_dir }}/bin/phpize"
+
+- name: list php binaries to add to alternatives
+  shell: ls -1 {{ php70_install_dir }}/bin
+  register: php70_binaries
+  changed_when: false
+
+- name: add php binaries to alternatives
+  alternatives:
+    name: "{{ item }}"
+    path: "{{ php70_install_dir }}/bin/{{ item }}"
+    link: "/usr/bin/{{ item }}"
+  with_items: "{{ php70_binaries.stdout_lines }}"
+
+# 编译phpredis
+- name: compile and install phpredis
+  command: "{{ item }}"
+  with_items:
+    - "{{ php70_install_dir }}/bin/phpize"
+    - "./configure --with-php-config={{ php70_install_dir }}/bin/php-config"
+    - "make -j {{ ansible_processor_cores }}"
+    - "make install"
+  args:
+    chdir: /usr/local/src/redis-{{ redis_pecl_for_php_version }}
+
+## 配置文件
+# php.ini
+- name: create php.ini config file
+  template:
+    src: php.ini.j2
+    dest: "{{ php70_config_dir }}/php.ini"
+
+# ext-opcache.ini
+- name: create ext-opcache.ini config file
+  template:
+    src: php.d/ext-opcache.ini.j2
+    dest: "{{ php70_extension_config_dir }}/ext-opcache.ini"
+
+# ext-redis.ini
+- name: create ext-redis.ini config file
+  template:
+    src: php.d/ext-redis.ini.j2
+    dest: "{{ php70_extension_config_dir }}/ext-redis.ini"

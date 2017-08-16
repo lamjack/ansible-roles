@@ -1,0 +1,15 @@
+---
+# 下载redis源代码解压缩并删除压缩文件
+- name: download redis-{{ redis_version }}
+  when: ansible_version.major >= 2
+  get_url:
+    url: "{{ redis_download_url }}"
+    dest: /usr/local/src/redis-{{ redis_version }}.tar.gz
+    checksum: "{{ redis_checksum|default(omit) }}"
+
+- name: extract redis tarball
+  unarchive:
+    src: /usr/local/src/redis-{{ redis_version }}.tar.gz
+    dest: /usr/local/src
+    creates: /usr/local/src/redis-{{ redis_version }}/Makefile
+    copy: no

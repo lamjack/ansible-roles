@@ -1,0 +1,37 @@
+---
+haproxy_version: 1.7.8
+haproxy_download_url: "http://www.haproxy.org/download/1.7/src/haproxy-{{ haproxy_version }}.tar.gz"
+haproxy_install_dir: /usr/local/haproxy
+haproxy_config_dir: "{{ haproxy_install_dir }}/etc"
+haproxy_chroot_dir: /var/run/haproxy
+haproxy_stats_socket: "{{ haproxy_chroot_dir }}/haproxy.sock"
+haproxy_stats_socket_user: "{{ haproxy_chroot_dir }}/haproxy-stats.sock"
+
+haproxy_user: haproxy
+haproxy_group: "{{ haproxy_user }}"
+
+haproxy_make_config: TARGET=linux2628 PREFIX={{ haproxy_install_dir }} CPU=x86_64 USE_OPENSSL=1 USE_ZLIB=1 USE_PCRE=1 USE_LINUX_TPROXY=1 USE_LINUX_SPLICE=1 USE_LIBCRYPT=1 USE_REGPARM=1
+
+haproxy_app_name: default
+
+haproxy_ssl: false
+haproxy_ssl_cert: 
+
+# 设定每个HAProxy进程可接受的最大并发连接数,此选项等同于linux命令选项”ulimit -n”
+haproxy_maxconn: 1024
+
+haproxy_stat_user: haproxy
+haproxy_stat_pass: haproxy
+
+haproxy_http_check_uri: ok.html
+
+haproxy_app_servers:
+  - id: default-server-1
+    host: 127.0.0.1
+    port: 4000
+    protocol: tcp
+
+  - id: default-server-2
+    host: 127.0.0.1
+    port: 4001
+    protocol: tcp

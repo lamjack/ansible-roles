@@ -1,0 +1,13 @@
+---
+- name: download keepalived
+  get_url:
+    url: "{{ keepalived_download_url }}"
+    dest: /usr/local/src/keepalived-{{ keepalived_version }}.tar.gz
+    force: no
+
+- name: extract keepalived tarball
+  unarchive:
+    src: /usr/local/src/keepalived-{{ keepalived_version }}.tar.gz
+    dest: /usr/local/src
+    copy: no
+    creates: keepalived-{{ keepalived_version }}

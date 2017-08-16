@@ -1,0 +1,79 @@
+---
+# 设置内核允许分配所有的物理内存,不管内存状态
+- name: enable overcommit in sysctl
+  when: redis_travis_ci is not defined
+  sysctl:
+    name: vm.overcommit_memory
+    value: 1
+    state: present
+    reload: yes
+    ignoreerrors: yes
+
+## 检查是否需要创建redis用户以及组
+- name: check if redis user exists
+  command: id {{ redis_user }}
+  ignore_errors: yes
+  changed_when: false
+  register: _redis_user_exists
+
+- name: add redis group
+  group:
+    name: "{{ redis_group }}"
+    state: present
+  when: _redis_user_exists|failed
+
+- name: add redis user
+  user:
+    name: "{{ redis_user }}"
+    group: "{{ redis_group }}"
+    comment: "Redis"
+    home: "{{ redis_install_dir }}"
+    shell: /bin/false
+    system: yes
+  when: _redis_user_exists|failed
+
+## 创建redis所需要的目录
+# 安装目录
+- name: create redis install directory
+  file:
+    path: "{{ redis_install_dir }}"
+    state: directory
+
+# 配置文件目录
+- name: create /etc/redis
+  file:
+    path: /etc/redis
+    state: directory
+
+# pid文件目录
+- name: create /var/run/redis
+  file:
+    path: /var/run/redis
+    state: directory
+    owner: "{{ redis_user }}"
+
+## 编译安装redis,这里creates的作用是防止重复编译
+- name: compile redis
+  command: make -j{{ ansible_processor_cores + 1 }}
+  args:
+    chdir: /usr/local/src/redis-{{ redis_version }}
+    creates: /usr/local/src/redis-{{ redis_version }}/src/redis-server
+
+- name: install redis
+  command: make PREFIX={{ redis_install_dir }} install
+  args:
+    chdir: /usr/local/src/redis-{{ redis_version }}
+    creates: "{{ redis_install_dir }}/bin/redis-server"
+
+## 将redis编译后的binaries放入/usr/bin中
+- name: list redis binaries to add to alternatives
+  command: ls -1 {{ redis_install_dir }}/bin
+  register: redis_binaries
+  changed_when: false
+
+- name: add redis binaries to alternatives
+  alternatives:
+    name: "{{ item }}"
+    path: "{{ redis_install_dir }}/bin/{{ item }}"
+    link: "/usr/bin/{{ item }}"
+  with_items: "{{ redis_binaries.stdout_lines }}"

@@ -1,0 +1,92 @@
+---
+## 下载编译所需要的源代码
+# libiconv
+- name: download libiconv-{{ libiconv_version }}
+  get_url:
+    url: http://ftp.gnu.org/pub/gnu/libiconv/libiconv-{{ libiconv_version }}.tar.gz
+    dest: /usr/local/src/libiconv-{{ libiconv_version }}.tar.gz
+
+- name: extract libiconv-{{ libiconv_version }} tarball
+  unarchive:
+    src: /usr/local/src/libiconv-{{ libiconv_version }}.tar.gz
+    dest: /usr/local/src
+    creates: /usr/local/src/libiconv-{{ libiconv_version }}/Makefile
+    copy: no
+
+# curl
+- name: download curl-{{ curl_version }}
+  get_url:
+    url: https://curl.haxx.se/download/curl-{{ curl_version }}.tar.gz
+    dest: /usr/local/src/curl-{{ curl_version }}.tar.gz
+
+- name: extract curl-{{ curl_version }} tarball
+  unarchive:
+    src: /usr/local/src/curl-{{ curl_version }}.tar.gz
+    dest: /usr/local/src
+    creates: /usr/local/src/curl-{{ curl_version }}/Makefile
+    copy: no
+
+# libmcrypt
+- name: download libmcrypt-{{ libmcrypt_version }}
+  get_url:
+    url: http://downloads.sourceforge.net/project/mcrypt/Libmcrypt/{{ libmcrypt_version }}/libmcrypt-{{ libmcrypt_version }}.tar.gz
+    dest: /usr/local/src/libmcrypt-{{ libmcrypt_version }}.tar.gz
+
+- name: extract libmcrypt-{{ libmcrypt_version }} tarball
+  unarchive:
+    src: /usr/local/src/libmcrypt-{{ libmcrypt_version }}.tar.gz
+    dest: /usr/local/src
+    creates: /usr/local/src/libmcrypt-{{ libmcrypt_version }}/Makefile
+    copy: no
+
+# mhash
+- name: download mhash-{{ mhash_version }}
+  get_url:
+    url: http://downloads.sourceforge.net/project/mhash/mhash/{{ mhash_version }}/mhash-{{ mhash_version }}.tar.gz
+    dest: /usr/local/src/mhash-{{ mhash_version }}.tar.gz
+    force: no
+
+- name: extract mhash-{{ mhash_version }} tarball
+  unarchive:
+    src: /usr/local/src/mhash-{{ mhash_version }}.tar.gz
+    dest: /usr/local/src
+    creates: /usr/local/src/mhash-{{ mhash_version }}/Makefile
+    copy: no
+
+# mcrypt
+- name: download mcrypt-{{ mcrypt_version }}
+  get_url:
+    url: http://downloads.sourceforge.net/project/mcrypt/MCrypt/{{ mcrypt_version }}/mcrypt-{{ mcrypt_version }}.tar.gz
+    dest: /usr/local/src/mcrypt-{{ mcrypt_version }}.tar.gz
+
+- name: extract mcrypt-{{ mcrypt_version }} tarball
+  unarchive:
+    src: /usr/local/src/mcrypt-{{ mcrypt_version }}.tar.gz
+    dest: /usr/local/src
+    creates: /usr/local/src/mcrypt-{{ mcrypt_version }}/Makefile
+    copy: no
+
+# php
+- name: download php-{{ php_version }}
+  get_url:
+    url: http://www.php.net/distributions/php-{{ php_version }}.tar.gz
+    dest: /usr/local/src/php-{{ php_version }}.tar.gz
+
+- name: extract php-{{ php_version }} tarball
+  unarchive:
+    src: /usr/local/src/php-{{ php_version }}.tar.gz
+    dest: /usr/local/src
+    creates: /usr/local/src/php-{{ php_version }}/Makefile
+    copy: no
+
+# redis pecl for php70
+- name: download phpredis-{{ redis_pecl_for_php_version }}
+  get_url:
+    url: http://pecl.php.net/get/redis-{{ redis_pecl_for_php_version }}.tgz
+    dest: /usr/local/src/redis-{{ redis_pecl_for_php_version }}.tgz
+
+- name: extract phpredis-{{ redis_pecl_for_php_version }}
+  unarchive:
+    src: /usr/local/src/redis-{{ redis_pecl_for_php_version }}.tgz
+    dest: /usr/local/src
+    copy: no

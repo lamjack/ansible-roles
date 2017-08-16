@@ -1,0 +1,46 @@
+---
+- name: create mysql logs directory
+  file:
+    path: "{{ mysql_logs_dir }}"
+    state: directory
+    owner: mysql
+    group: mysql
+    mode:  0755
+
+- name: copy my.cnf global mysql configuration
+  template:
+    src: my.cnf.j2
+    dest: "{{ mysql_config_file }}"
+    owner: root
+    group: root
+    mode: 0644
+    force: "{{ mysql_overwrite_global_mycnf }}"
+
+- name: stat mysql data directory
+  stat:
+    path: "{{ mysql_datadir }}"
+  register: stat_datadir
+
+- name: init mysql
+  when: not stat_datadir.stat.exists
+  command: mysqld --initialize-insecure --user={{ mysql_user }} --basedir={{ mysql_basedir }} --datadir={{ mysql_datadir }}
+
+- name: ensure mysql is started and enabled on boot
+  service:
+    name: "{{ mysql_daemon }}"
+    state: started
+    enabled: true
+  failed_when: False
+
+- name: update root password
+  when:
+    - not stat_datadir.stat.exists 
+    - not ((mysql_root_password is undefined) or (mysql_root_password is none) or (mysql_root_password | trim == ''))
+  command: "{{ item }}"
+  with_items:
+    - mysql -e "grant all privileges on *.* to root@'127.0.0.1' identified by '{{ mysql_root_password }}' with grant option;"
+    - mysql -e "grant all privileges on *.* to root@'localhost' identified by '{{ mysql_root_password }}' with grant option;"
+    - mysql -uroot -p{{ mysql_root_password }} -e "reset master;"
+
+- name: flush handlers to apply config changes
+  meta: flush_handlers

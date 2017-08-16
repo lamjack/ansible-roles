@@ -1,0 +1,24 @@
+---
+- name: download mysql yum repository
+  get_url:
+    url: "{{ mysql_yum_repository_url }}"
+    dest: /usr/local/src
+    force: no
+
+- name: Install the downloaded release package
+  yum:
+    name: "/usr/local/src/{{ mysql_yum_repository_url|basename }}"
+    state: present
+
+- name: install mysql
+  yum:
+    name: "{{ item }}"
+    state: installed
+  with_items:
+    - mysql-community-client
+    - mysql-community-server
+
+- name: install python-mysqldb for ansible
+  yum:
+    name: "MySQL-python"
+    state: present

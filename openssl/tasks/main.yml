@@ -1,0 +1,8 @@
+---
+- shell: "openssl version"
+  ignore_errors: yes
+  register: openssl_version_query
+
+- name: Install openssl-{{ openssl_version }}
+  when: openssl_version_query.stdout.find(openssl_version) == -1
+  include: "_install_source.yml"

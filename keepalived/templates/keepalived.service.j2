@@ -1,0 +1,14 @@
+[Unit]
+Description=Keepalived  
+After=syslog.target network.target
+
+[Service]
+Type=forking
+PIDFile={{ keepalived_chroot_dir }}/keepalived.pid
+ExecStart={{ keepalived_install_dir }}/sbin/keepalived {{ keepalived_options }}
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/bin/kill -s QUIT $MAINPID
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

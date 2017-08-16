@@ -1,0 +1,63 @@
+---
+## FPM pools配置
+- name: create php-fpm.conf config file
+  template:
+    src: php-fpm.conf.j2
+    dest: "{{ php70_config_dir }}/php-fpm.conf"
+
+- name: recreate php-fpm.d directory
+  command: "{{ item }}"
+  with_items:
+    - "rm -rf {{ php70_fpm_pools_dir }}"
+    - "mkdir -p {{ php70_fpm_pools_dir }}"
+  ignore_errors: yes
+
+- name: create pool config files
+  when: php_fpm_pools|length > 0
+  template:
+    src: php-fpm.d/pool.conf.j2
+    dest: "{{ php70_fpm_pools_dir }}/{{ item['name'] }}.conf"
+  with_items: "{{ php_fpm_pools }}"
+
+## php-fpm启动脚本
+# 非systemd
+- name: create php-fpm init script
+  when: ansible_service_mgr|default() != "systemd"
+  template:
+    src: php-fpm.init.j2
+    dest: /etc/init.d/php70-fpm
+    mode: 0755
+
+# systemd
+- name: create php-fpm systemd service
+  when: ansible_service_mgr|default() == "systemd"
+  template:
+    src: php-fpm.service.j2
+    dest: /etc/systemd/system/php70-fpm.service
+    mode: 0644
+  register: phpfpm_unit_file
+
+- debug:
+    var: phpfpm_unit_file
+
+# 重新加载systemd配置
+- name: reload systemd daemon
+  when:
+    - ansible_service_mgr|default() == "systemd"
+    - phpfpm_unit_file|changed
+  command: systemctl daemon-reload
+
+# 设置php-fpm开机自动启动
+- name: set php-fpm to start at boot
+  service:
+    name: php70-fpm
+    enabled: yes
+
+- name: flush handlers to apply config changes
+  meta: flush_handlers
+
+- name: ensure php-fpm is running
+  service:
+    name: php70-fpm
+    state: started
+  

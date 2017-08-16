@@ -1,0 +1,5 @@
+---
+openssl_version: 1.0.2l
+openssl_src_path: /usr/local/src
+openssl_install_dir: /usr/local/openssl
+openssl_force_install: false

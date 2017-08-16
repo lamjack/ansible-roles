@@ -1,0 +1,9 @@
+---
+php_composer_install_dir: /usr/local/bin
+php_composer_bin_path: "{{ php_composer_install_dir }}/composer"
+
+composer_home_path: '~/.composer'
+composer_home_owner: root
+composer_home_group: root
+
+composer_github_oauth_token: ''

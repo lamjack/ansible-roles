@@ -1,0 +1,18 @@
+---
+- name: check-set-parameters
+  include: _elasticsearch-parameters.yml
+  tags:
+    - always
+    
+- include: _install_java.yml
+  when: es_java_install
+  tags:
+    - java
+
+- include: _install_elasticsearch.yml
+  tags:
+    - install
+
+- include: _config.yml
+  tags:
+    - config

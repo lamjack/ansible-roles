@@ -1,0 +1,129 @@
+---
+## 
+- name: create redis working directory
+  file:
+    path: "{{ redis_dir }}"
+    state: directory
+    recurse: yes
+    owner: "{{ redis_user }}"
+
+## redis服务启动脚本
+# 非systemd的情况
+- name: create redis init script
+  when: redis_as_service and ansible_service_mgr|default() != "systemd"
+  template:
+    src: redis.init.j2
+    dest: /etc/init.d/{{ redis_service_name }}
+    mode: 0755
+
+# systemd的情况
+- name: create redis systemd service
+  when: redis_as_service and ansible_service_mgr|default() == "systemd"
+  template:
+    src: redis.service.j2
+    dest: /etc/systemd/system/{{ redis_service_name }}.service
+    mode: 0644
+  register: redis_unit_file
+
+# 研究下
+- name: create systemd tmpfiles configuration
+  when:
+    - redis_as_service
+    - ansible_service_mgr|default() == 'systemd'
+    - (redis_pidfile|dirname).startswith('/var/run') or (redis_pidfile|dirname).startswith('/run')
+  template:
+    src: etc/tmpfiles.d/redis.conf.j2
+    dest: /etc/tmpfiles.d/redis.conf
+    mode: 0644
+
+# 重新加载systemd配置
+- name: reload systemd daemon
+  command: systemctl daemon-reload
+  when:
+    - redis_as_service
+    - ansible_service_mgr|default() == "systemd"
+    - redis_unit_file|changed
+
+# 设置redis开机自动启动
+- name: set redis to start at boot
+  service:
+    name: "{{ redis_service_name }}"
+    enabled: yes
+  when: redis_as_service
+
+## 检查是否已经配置redis日志文件,如果有的话设置对应的权限
+- name: check if log directory exists
+  when: redis_logfile != '""'
+  stat:
+    path: "{{ redis_logfile|dirname }}"
+  register: _redis_logdir
+  changed_when: false
+
+- name: create log directory if it does not exists
+  when:
+    - redis_logfile != '""'
+    - not _redis_logdir.stat.exists
+  file:
+    state: directory
+    path: "{{ redis_logfile|dirname }}"
+    owner: "{{ redis_user }}"
+    group: "{{ redis_group }}"
+
+- name: touch the redis log file
+  when: redis_logfile != '""'
+  file:
+    state: touch
+    path: "{{ redis_logfile }}"
+    owner: "{{ redis_user }}"
+    group: "{{ redis_group }}"
+
+## 检查保存pid的目录是否存在,如果不存在则创建并设置对应权限
+- name: check if pid directory exists
+  when: redis_pidfile != '""'
+  stat:
+    path: "{{ redis_pidfile|dirname }}"
+  register: _redis_piddir
+  changed_when: false
+
+- name: create pid directory if it does not exist
+  when:
+    - redis_pidfile != '""'
+    - not _redis_piddir.stat.exists
+  file:
+    state: directory
+    path: "{{ redis_pidfile|dirname }}"
+    owner: "{{ redis_user }}"
+    group: "{{ redis_group }}"
+
+## Redis配置文件,检查目录是否存在
+- name: check if config directory exists
+  stat:
+    path: "{{ redis_config_file|dirname }}"
+  register: _redis_configdir
+  changed_when: false
+
+- name: create config directory if it does not exists
+  when:
+    - not _redis_configdir.stat.exists
+  file:
+    state: directory
+    path: "{{ redis_config_file|dirname }}"
+    owner: "{{ redis_user }}"
+    group: "{{ redis_group }}"
+
+- name: create redis config file
+  template:
+    src: redis.conf.j2
+    dest: "{{ redis_config_file }}"
+    owner: "{{ redis_user }}"
+    mode: 0640
+  notify: restart redis
+
+- name: flush handlers to apply config changes
+  meta: flush_handlers
+
+- name: ensure redis is running
+  service:
+    name: "{{ redis_service_name }}"
+    state: started
+  when: redis_as_service

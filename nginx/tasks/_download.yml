@@ -1,0 +1,33 @@
+---
+- name: download pcre-{{ pcre_version }}
+  get_url:
+    url: http://mirrors.linuxeye.com/oneinstack/src/pcre-{{ pcre_version }}.tar.gz
+    dest: /usr/local/src/pcre-{{ pcre_version }}.tar.gz
+
+- name: extract pcre-{{ pcre_version }}
+  unarchive:
+    src: /usr/local/src/pcre-{{ pcre_version }}.tar.gz
+    dest: /usr/local/src
+    copy: no
+
+- name: download openssl-{{ openssl_version }}
+  get_url:
+    url: https://www.openssl.org/source/openssl-{{ openssl_version }}.tar.gz
+    dest: /usr/local/src/openssl-{{ openssl_version }}.tar.gz
+
+- name: extract openssl-{{ openssl_version }}
+  unarchive:
+    src: /usr/local/src/openssl-{{ openssl_version }}.tar.gz
+    dest: /usr/local/src
+    copy: no
+
+- name: download nginx-{{ nginx_version }}
+  get_url:
+    url: http://nginx.org/download/nginx-{{ nginx_version }}.tar.gz
+    dest: /usr/local/src/nginx-{{ nginx_version }}.tar.gz
+
+- name: extract nginx-{{ nginx_version }} tarball
+  unarchive:
+    src: /usr/local/src/nginx-{{ nginx_version }}.tar.gz
+    dest: /usr/local/src
+    copy: no

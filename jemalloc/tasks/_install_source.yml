@@ -1,0 +1,45 @@
+---
+- name: Ensures compiler dependency analysis
+  when: jemalloc_install_from == "source"
+  yum: >
+    name="{{ item }}"
+    state=present
+  with_items:
+    - autoconf
+    - gcc
+
+- name: Download jemalloc
+  git: >
+    repo="{{ jemalloc_git_repo }}"
+    version="{{ jemalloc_version }}"
+    dest="{{ jemalloc_src_path }}"
+    force=yes
+    depth=1
+
+- name: Configure jemalloc
+  command: "./autogen.sh --prefix=/usr"
+  args:
+    chdir: "{{ jemalloc_src_path }}"
+
+- name: Make jemalloc
+  command: "make"
+  args:
+    chdir: "{{ jemalloc_src_path }}"
+
+# http://www.canonware.com/pipermail/jemalloc-discuss/2013-May/000593.html
+- name: Make install jemalloc
+  command: "make install_bin install_include install_lib"
+  args:
+    chdir: "{{ jemalloc_src_path }}"
+
+- name: Check for lib64
+  stat:
+    path: /usr/lib64
+  register: jemalloc_lib64_path
+
+- name: Symlink jemalloc libs to lib64
+  when: jemalloc_lib64_path.stat.exists
+  shell: "ln -s /usr/lib/libjem* /usr/lib64/"
+
+- name: Reload ldconfig
+  command: "ldconfig"

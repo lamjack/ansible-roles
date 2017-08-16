@@ -1,0 +1,98 @@
+---
+## 编译所需的依赖组件
+# libiconv
+- name: compile and install libiconv-{{ libiconv_version }}
+  command: "{{ item }}"
+  with_items:
+    - "./configure --prefix={{ dependencies_install_prefix }}"
+    - make -j {{ ansible_processor_cores }}
+    - make install
+  args:
+    chdir: /usr/local/src/libiconv-{{ libiconv_version }}
+    creates: "{{ dependencies_install_prefix }}/bin/iconv"
+
+# curl
+- name: compile and install curl-{{ curl_version }}
+  command: "{{ item }}"
+  with_items:
+    - "./configure --prefix={{ dependencies_install_prefix }} --with-ssl={{ openssl_install_dir }}"
+    - make -j {{ ansible_processor_cores }}
+    - make install
+  args:
+    chdir: /usr/local/src/curl-{{ curl_version }}
+    creates: "{{ dependencies_install_prefix }}/bin/curl"
+
+# libmcrypt
+- name: compile and install libmcrypt-{{ libmcrypt_version }}
+  command: "{{ item }}"
+  with_items:
+    - "./configure"
+    - make -j {{ ansible_processor_cores }}
+    - make install
+    - ldconfig
+  args:
+    chdir: /usr/local/src/libmcrypt-{{ libmcrypt_version }}
+    creates: "{{ dependencies_install_prefix }}/bin/libmcrypt-config"
+
+# libltdl
+- name: compile and install libltdl
+  command: "{{ item }}"
+  with_items:
+    - "./configure --enable-ltdl-install"
+    - make -j {{ ansible_processor_cores }}
+    - make install
+  args:
+    chdir: /usr/local/src/libmcrypt-{{ libmcrypt_version }}/libltdl
+    creates: "/usr/local/src/libmcrypt-{{ libmcrypt_version }}/libltdl/libtool"
+
+# mhash
+- name: compile and install mhash
+  command: "{{ item }}"
+  with_items:
+    - "./configure"
+    - make -j {{ ansible_processor_cores }}
+    - make install
+    - ldconfig
+  args:
+    chdir: /usr/local/src/mhash-{{ mhash_version }}
+    creates: "/usr/local/lib/libmhash.so"
+
+- template:
+    src: "etc/ld.so.conf.d/local.conf.j2"
+    dest: "/etc/ld.so.conf.d/local.conf"
+    backup: yes
+    force: true
+
+- name: run ldconfig
+  command: ldconfig
+
+- when: ansible_distribution == "CentOS"
+  file:
+    src:  /usr/local/bin/libmcrypt-config
+    dest: /usr/bin/libmcrypt-config
+    state: link
+  ignore_errors: yes
+
+- when: ansible_distribution == "CentOS" and ansible_userspace_bits == "64" and ansible_distribution_major_version != 7
+  file:
+    src:  /lib64/libpcre.so.0.0.1
+    dest: /lib64/libpcre.so.1
+    state: link
+  ignore_errors: yes
+
+- when: ansible_distribution == "CentOS" and ansible_userspace_bits == "32" and ansible_distribution_major_version != 7
+  file:
+    src:  /lib/libpcre.so.0.0.1
+    dest: /lib/libpcre.so.1
+    state: link
+  ignore_errors: yes
+
+- name: compile and install mcrypt-{{ mcrypt_version }}
+  command: "{{ item }}"
+  with_items:
+    - ldconfig
+    - "./configure"
+    - make -j {{ ansible_processor_cores }}
+    - make install
+  args:
+    chdir: /usr/local/src/mcrypt-{{ mcrypt_version }}

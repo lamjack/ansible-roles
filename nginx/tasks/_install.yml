@@ -1,0 +1,67 @@
+---
+- name: disable nginx compile debug flag
+  replace:
+    path: /usr/local/src/nginx-{{ nginx_version }}/auto/cc/gcc
+    regexp: '^CFLAGS=\"\$CFLAGS -g\"$'
+    replace: '#CFLAGS="$CFLAGS -g"'
+
+- name: check if nginx user exists
+  command: id {{ nginx_user }}
+  ignore_errors: yes
+  changed_when: false
+  register: _nginx_user_exists
+
+- name: add nginx group
+  group:
+    name: "{{ nginx_group }}"
+    state: present
+  when: _nginx_user_exists|failed
+
+- name: add nginx user
+  user:
+    name: "{{ nginx_user }}"
+    group: "{{ nginx_group }}"
+    createhome: no
+    comment: "nginx server"
+    shell: /bin/false
+    system: yes
+  when: _nginx_user_exists|failed
+
+- name: create nginx install directory
+  file:
+    path: "{{ nginx_install_dir }}"
+    state: directory
+
+- name: create nginx pid directory
+  file:
+    path: "{{ nginx_pidfile|dirname }}"
+    state: directory
+    owner: "{{ nginx_user }}"
+
+- name: create nginx logs directory
+  file:
+    path: "{{ nginx_logs_dir }}"
+    state: directory
+    owner: "{{ nginx_user }}"
+
+- name: compile and install nginx
+  command: "{{ item }}"
+  with_items:
+    - "{{ nginx_source_configure_command }}"
+    - make -j {{ ansible_processor_cores }}
+    - make install
+  args:
+    chdir: /usr/local/src/nginx-{{ nginx_version }}
+    creates: "{{ nginx_install_dir }}/sbin/nginx"
+
+- name: list nginx binaries to add to alternatives
+  shell: ls -1 {{ nginx_install_dir }}/sbin
+  register: nginx_binaries
+  changed_when: false
+
+- name: add nginx binaries to alternatives
+  alternatives:
+    name: "{{ item }}"
+    path: "{{ nginx_install_dir }}/sbin/{{ item }}"
+    link: "/usr/bin/{{ item }}"
+  with_items: "{{ nginx_binaries.stdout_lines }}"

@@ -1,0 +1,27 @@
+---
+- include: _download.yml
+  tags:
+    - download
+
+- include: _dependencies.yml
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+
+- include: _install.yml
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+
+- include: _server.yml
+  when: not redis_sentinel
+  tags:
+    - config
+
+- include: _sentinel.yml
+  when: redis_sentinel
+  tags:
+    - config
+
+- include: _local_facts.yml
+  when: redis_local_facts|bool

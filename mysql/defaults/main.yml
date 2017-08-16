@@ -1,0 +1,20 @@
+---
+mysql_yum_repository_url: https://dev.mysql.com/get/mysql57-community-release-el7-11.noarch.rpm
+mysql_config_file: /etc/my.cnf
+
+mysql_overwrite_global_mycnf: yes
+
+mysql_daemon: mysqld
+
+mysql_user: mysql
+mysql_group: "{{ mysql_user }}"
+
+mysql_root_username: root
+mysql_root_password: 76tyQXJC34ycb2ydfD
+
+mysql_bind_address: 127.0.0.1
+mysql_port: 3306
+mysql_basedir: /var/lib/mysql
+mysql_datadir: /data/mysql
+mysql_logs_dir: /data/logs/mysql
+mysql_default_storage_engine: InnoDB

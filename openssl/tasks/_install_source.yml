@@ -1,0 +1,63 @@
+---
+- name: Ensures compiler dependency analysis
+  yum: >
+    name="{{ item }}"
+    state=present
+  with_items:
+    - openssl-devel
+
+- name: Check if openssl-{{ openssl_version }} donwloaded
+  stat: path="{{ openssl_src_path }}/openssl-{{ openssl_version }}"
+  register: openssl_src_result
+
+- name: Download openssl-{{ openssl_version }}
+  when: not openssl_src_result.stat.exists
+  unarchive: >
+    src="https://www.openssl.org/source/openssl-{{ openssl_version }}.tar.gz"
+    remote_src=true
+    dest="{{ openssl_src_path }}"
+
+- name: Make Clean openssl-{{ openssl_version }} 
+  command: make clean
+  args:
+    chdir: "{{ openssl_src_path }}/openssl-{{ openssl_version }}"
+
+- name: Get cpu processor count for make
+  shell: "grep 'processor' /proc/cpuinfo | sort -u | wc -l"
+  ignore_errors: yes
+  register: openssl_processor_query
+
+- debug: var=openssl_processor_query verbosity=1
+
+- name: Configure openssl-{{ openssl_version }} 
+  command: "./config --prefix={{ openssl_install_dir }} -fPIC shared zlib-dynamic"
+  args:
+    chdir: "{{ openssl_src_path }}/openssl-{{ openssl_version }}"
+
+- name: Make openssl-{{ openssl_version }} 
+  command: "make -j {{ openssl_processor_query.stdout|int }}"
+  args:
+    chdir: "{{ openssl_src_path }}/openssl-{{ openssl_version }}"
+
+- name: Install openssl-{{ openssl_version }}
+  command: "make install"
+  args:
+    chdir: "{{ openssl_src_path }}/openssl-{{ openssl_version }}"
+
+- template: 
+    src: "openssl.conf.j2"
+    dest: "/etc/ld.so.conf.d/openssl.conf"
+    backup: yes
+    force: true
+  notify:
+    - run ldconfig
+    
+- command: "which openssl"
+  when: ansible_distribution == "CentOS"
+  register: which_openssl_result
+
+- name: Override openssl
+  command: "{{ item }}"
+  with_items:
+    - "mv {{ which_openssl_result.stdout }} {{ which_openssl_result.stdout }}.backup"
+    - "ln -s {{ openssl_install_dir }}/bin/openssl {{ which_openssl_result.stdout }}"
