@@ -1,0 +1,28 @@
+---
+- name: add kibana repository
+  template:
+    src: kibana.repo.j2
+    dest: /etc/yum.repos.d/kibana.repo
+    mode: 0644
+    force: yes
+
+- name: install kibana
+  package:
+    name: kibana
+    state: present
+
+- name: ensure kibana is started and enabled at boot
+  service:
+    name: kibana
+    state: started
+    enabled: yes
+
+- name: copy kibana configuration
+  template:
+    src: kibana.yml.j2
+    dest: /etc/kibana/kibana.yml
+    owner: root
+    group: root
+    mode: 0644
+    force: yes
+  notify: restart kibana
