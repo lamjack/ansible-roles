@@ -1,0 +1,12 @@
+[Unit]
+Description=Supervisord
+
+[Service]
+Type=forking
+PIDFile={{ supervisor_pidfile }}
+ExecStart=/usr/bin/supervisord -c {{ supervisor_config_path }}/supervisord.conf
+ExecStop=/bin/kill -TERM $MAINPID
+ExecReload=/bin/kill -HUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target

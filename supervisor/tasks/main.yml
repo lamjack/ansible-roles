@@ -1,0 +1,16 @@
+---
+- include: _init.yml
+  tags:
+    - always
+
+- include: _install.yml
+  tags:
+    - install
+
+- include: _config.yml
+  tags:
+    - config
+
+- include: _service.yml
+  tags:
+    - config

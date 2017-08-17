@@ -1,0 +1,36 @@
+[supervisord]
+logfile = {{ supervisor_log_dir }}/supervisord.log
+loglevel = info
+pidfile = {{ supervisor_pidfile }}
+nodaemon = {{ supervisor_nodaemon }}
+
+{% if supervisor_unix_http_server_enable %}
+[unix_http_server]
+file = {{ supervisor_unix_http_server_socket_file }}
+chown = {{ supervisor_system_user }}:{{ supervisor_system_group }}
+username = {{ supervisor_server_username }}
+password = {SHA}{{ supervisor_server_password|hash('sha1') }}
+
+[supervisorctl]
+serverurl = unix://{{ supervisor_unix_http_server_socket_file }}
+username = {{ supervisor_server_username }}
+password = {SHA}{{ supervisor_server_password|hash('sha1') }}
+{% endif %}
+
+{%- if supervisor_inet_http_server_enable %}
+[inet_http_server]
+port = {{ supervisor_inet_http_server }}:{{ supervisor_inet_http_server_port }}
+username = {{ supervisor_username }}
+password = {SHA}{{ supervisor_password|hash('sha1') }}
+
+[supervisorctl]
+serverurl = http://127.0.0.1:{{ supervisor_inet_http_server_port }}
+#username = {{ supervisor_username }}
+#password = {SHA}{{ supervisor_password|hash('sha1') }}
+{% endif %}
+
+[include]
+files = "{{ supervisor_config_path }}/supervisord.d/*.conf"
+
+[rpcinterface:supervisor]
+supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface

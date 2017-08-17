@@ -1,0 +1,21 @@
+---
+- name: generate init file
+  template:
+    src: init/supervisord.j2
+    dest: "{{ init_script }}"
+    mode: 0755
+    force: yes
+  when: not use_system_d
+  notify:
+    - restart supervisord
+
+- name: generate systemd file
+  template:
+    src: systemd/supervisord.j2
+    dest: "{{ sysd_script }}"
+    mode: 0644
+    force: yes
+  when: use_system_d
+  notify:
+    - reload systemd configuration
+    - restart supervisord

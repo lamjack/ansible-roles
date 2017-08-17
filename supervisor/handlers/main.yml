@@ -1,0 +1,10 @@
+---
+- name: reload systemd configuration
+  command: systemctl daemon-reload
+  
+- name: restart supervisord
+  service:
+    name: "{{ init_script | basename }}"
+    state: restarted
+    enabled: yes
+  register: supervisord_started

@@ -1,0 +1,4 @@
+---
+supervisor_bin_path: /usr/bin/supervisord
+sysd_script: /usr/lib/systemd/system/supervisord.service
+init_script: /etc/init.d/supervisord

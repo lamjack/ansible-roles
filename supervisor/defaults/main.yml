@@ -1,0 +1,29 @@
+---
+# Install a specific version of Supervisor by setting it here (e.g. '3.3.1').
+supervisor_version: latest
+
+# Choose whether to use an init script or systemd unit configuration to start
+# Supervisor when it's installed and/or after a system boot.
+supervisor_started: true
+supervisor_enabled: true
+
+supervisor_config_path: /etc/supervisor
+supervisor_programs: []
+
+supervisor_nodaemon: false
+
+supervisor_pidfile: /tmp/supervisord.pid
+supervisor_log_dir: /var/log/supervisor
+
+supervisor_system_user: root
+supervisor_system_group: root
+
+supervisor_server_username: supervisor
+supervisor_server_password: supervisor
+
+supervisor_unix_http_server_enable: true
+supervisor_unix_http_server_socket_file: /var/run/supervisor.sock
+
+supervisor_inet_http_server_enable: false
+supervisor_inet_http_server: "127.0.0.1"
+supervisor_inet_http_server_port: 9001

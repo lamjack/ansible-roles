@@ -1,0 +1,3 @@
+---
+- set_fact: 
+    use_system_d: "{{ ansible_distribution in ['RedHat','CentOS'] and ansible_distribution_version | version_compare('7', '>=') }}"

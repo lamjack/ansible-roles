@@ -1,0 +1,21 @@
+- name: create supervisor log directories
+  file:
+    path: "{{ supervisor_log_dir }}"
+    state: directory
+    mode: 0755
+
+- name: create supervisor config directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0755
+  with_items:
+    - "{{ supervisor_config_path }}"
+    - "{{ supervisor_config_path }}/supervisord.d"
+    
+- name: copy configuration file
+  template:
+    src: supervisord.conf.j2
+    dest: "{{ supervisor_config_path }}/supervisord.conf"
+    mode: 0644
+  notify: restart supervisord
