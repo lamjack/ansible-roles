@@ -1,0 +1,33 @@
+---
+- include: _install_java.yml
+  when: install_java
+
+- name: add logstash repo key
+  rpm_key:
+    key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+
+- name: enable logstash repository
+  template:
+    src: logstash_repo.j2
+    dest: /etc/yum.repos.d/logstash.repo
+
+- name: install logstash from repository
+  yum:
+    name: logstash
+    state: latest
+    update_cache: yes
+
+- name: create logstash patterns directories
+  file:
+    path: "{{ logstash_patterns_dir }}"
+    state: directory
+
+- name: generate logstash patterns
+  template:
+    src: "patterns/{{ item }}.j2"
+    dest: "{{ logstash_patterns_dir }}/{{ item }}"
+    force: true
+  with_items:
+    - nginx
+    - symfony

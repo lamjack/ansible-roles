@@ -1,0 +1,7 @@
+---
+logstash_major_version: "5.x"
+
+install_java: true  
+update_java: false
+
+logstash_patterns_dir: /opt/logstash/patterns
